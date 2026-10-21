@@ -37,13 +37,9 @@ RUN set -eux; \
     ln -sf $logos/zumaos-wordmark.png /usr/share/anaconda/pixmaps/sidebar-logo.png; \
     gtk-update-icon-cache -f -q /usr/share/icons/hicolor
 
-# Login screen: Breeze SDDM theme over the ZumaOS wallpaper.
-RUN set -eux; \
-    if [ -d /usr/share/sddm/themes/breeze ]; then \
-        printf '[General]\nbackground=%s\ntype=image\n' \
-            /usr/share/wallpapers/ZumaOS/contents/images/3840x2160.png \
-            > /usr/share/sddm/themes/breeze/theme.conf.user; \
-    fi
+# The login screen (Plasma Login Manager) and the distro fallback profile
+# use wallpapers/Fedora -> Default; point Default at ZumaOS.
+RUN ln -sfn ZumaOS /usr/share/wallpapers/Default
 
 # Boot splash: reuse the stock keyboard-layout images for the disk-unlock
 # prompt, then rebuild the initramfs so Plymouth shows the ZumaOS theme.
