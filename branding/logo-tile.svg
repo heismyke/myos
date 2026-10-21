@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+     viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- The website logo as a macOS-style rounded-square app icon. -->
+  <defs>
+    <clipPath id="tile"><rect width="1024" height="1024" rx="230"/></clipPath>
+    <linearGradient id="sheen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity=".10"/>
+      <stop offset=".5" stop-color="#FFFFFF" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <g clip-path="url(#tile)">
+    <image xlink:href="zumaos-logo.png" href="zumaos-logo.png" width="1024" height="1024"/>
+    <rect width="1024" height="1024" fill="url(#sheen)"/>
+  </g>
+  <rect x="4" y="4" width="1016" height="1016" rx="226" fill="none"
+        stroke="#FFFFFF" stroke-opacity=".14" stroke-width="8"/>
+</svg>

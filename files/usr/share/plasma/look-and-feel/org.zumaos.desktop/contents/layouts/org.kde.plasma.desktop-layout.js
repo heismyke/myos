@@ -1,6 +1,7 @@
-// ZumaOS first-login layout: the ZumaOS wallpaper and a single floating,
-// centred, translucent dock so the KWin blur gives the glass look.
-var wallpaper = "file:///usr/share/wallpapers/ZumaOS/contents/images/3840x2160.png";
+// ZumaOS first-login layout, modelled on macOS: a slim translucent menu bar
+// across the top (Zuma menu, the active app's menus, tray, clock) and a
+// floating glass dock at the bottom. KWin's blur gives both the glass look.
+var wallpaper = "file:///usr/share/wallpapers/ZumaOS/";
 
 var desktopsArray = desktopsForActivity(currentActivity());
 for (var i = 0; i < desktopsArray.length; i++) {
@@ -10,24 +11,43 @@ for (var i = 0; i < desktopsArray.length; i++) {
     desktop.writeConfig("Image", wallpaper);
 }
 
-var panel = new Panel;
-panel.location = "bottom";
-panel.height = 2 * Math.ceil(gridUnit * 2.75 / 2);
-panel.floating = true;
-panel.alignment = "center";
-panel.lengthMode = "fit";
-panel.opacity = "translucent";
+// Menu bar
+var menuBar = new Panel;
+menuBar.location = "top";
+menuBar.height = 2 * Math.ceil(gridUnit * 1.5 / 2);
+menuBar.floating = false;
+menuBar.opacity = "translucent";
 
-var kickoff = panel.addWidget("org.kde.plasma.kickoff");
-kickoff.currentConfigGroup = ["General"];
-kickoff.writeConfig("icon", "/usr/share/zumaos-logos/zumaos-logo.svg");
+var zumaMenu = menuBar.addWidget("org.kde.plasma.kickoff");
+zumaMenu.currentConfigGroup = ["General"];
+zumaMenu.writeConfig("icon", "/usr/share/zumaos-logos/zumaos-symbolic.svg");
 
-var tasks = panel.addWidget("org.kde.plasma.icontasks");
-tasks.currentConfigGroup = ["General"];
-tasks.writeConfig("launchers", ["preferred://filemanager", "preferred://browser",
-                                "applications:org.kde.konsole.desktop",
-                                "applications:org.kde.discover.desktop"]);
+menuBar.addWidget("org.kde.plasma.appmenu");
+menuBar.addWidget("org.kde.plasma.panelspacer");
+menuBar.addWidget("org.kde.plasma.systemtray");
 
-panel.addWidget("org.kde.plasma.marginsseparator");
-panel.addWidget("org.kde.plasma.systemtray");
-panel.addWidget("org.kde.plasma.digitalclock");
+var clock = menuBar.addWidget("org.kde.plasma.digitalclock");
+clock.currentConfigGroup = ["Appearance"];
+clock.writeConfig("showDate", true);
+clock.writeConfig("dateFormat", "custom");
+clock.writeConfig("customDateFormat", "ddd d MMM");
+clock.writeConfig("dateDisplayFormat", 1); // date beside the time
+
+// Dock
+var dock = new Panel;
+dock.location = "bottom";
+dock.height = 2 * Math.ceil(gridUnit * 3.5 / 2);
+dock.floating = true;
+dock.alignment = "center";
+dock.lengthMode = "fit";
+dock.opacity = "translucent";
+
+var apps = dock.addWidget("org.kde.plasma.icontasks");
+apps.currentConfigGroup = ["General"];
+apps.writeConfig("launchers", ["preferred://filemanager", "preferred://browser",
+                               "applications:org.kde.discover.desktop",
+                               "applications:org.kde.konsole.desktop",
+                               "applications:systemsettings.desktop"]);
+
+dock.addWidget("org.kde.plasma.marginsseparator");
+dock.addWidget("org.kde.plasma.trash");

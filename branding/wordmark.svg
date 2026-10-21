@@ -1,6 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
-     viewBox="0 0 800 256" width="800" height="256">
-  <image href="logo.svg" xlink:href="logo.svg" x="0" y="0" width="256" height="256"/>
-  <text x="276" y="172" fill="#FFFFFF" font-family="Noto Sans, sans-serif"
-        font-size="120" font-weight="600" letter-spacing="-2">Zuma<tspan font-weight="300" fill-opacity=".7">OS</tspan></text>
-</svg>

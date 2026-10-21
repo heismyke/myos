@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 40 1024 1024" width="1024" height="1024">
+  <!-- Monochrome Zuma Rock, traced from the logo, for the top bar (like the
+       macOS menu-bar glyph). The cut-out line is the dome's highlight edge. -->
+  <defs>
+    <mask id="cut">
+      <rect x="0" y="0" width="1024" height="1100" fill="#FFFFFF"/>
+      <path d="M418 446 C 452 382 520 346 590 356 C 640 364 676 392 700 428"
+            fill="none" stroke="#000000" stroke-width="34" stroke-linecap="round"/>
+      <path d="M548 432 C 560 520 586 600 640 668" fill="none" stroke="#000000"
+            stroke-width="30" stroke-linecap="round"/>
+    </mask>
+  </defs>
+  <path mask="url(#cut)" fill="#FFFFFF"
+        d="M40 631 L212 470 L272 522 C 286 440 380 352 470 334 C 560 318 640 360 690 430
+           L 748 416 L 984 645 L 984 720 L 40 720 Z"/>
+</svg>

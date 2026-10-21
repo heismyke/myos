@@ -1,16 +1,34 @@
-# Render the SVG branding sources (branding/) to PNGs in a throwaway stage so
-# the final image doesn't carry the rendering tools.
+# Render the branding sources (branding/) in a throwaway stage so the final
+# image doesn't carry the rendering tools.
 FROM registry.fedoraproject.org/fedora:43 AS assets
-RUN dnf -y install librsvg2-tools google-noto-sans-fonts && dnf clean all
+RUN dnf -y install librsvg2-tools python3 python3-pillow unzip && dnf clean all
+
+# Inter (UI font) isn't packaged for EL10; take the pinned upstream release.
+ARG INTER_VERSION=4.1
+ARG INTER_SHA256=9883fdd4a49d4fb66bd8177ba6625ef9a64aa45899767dde3d36aa425756b11e
+RUN set -eux; \
+    curl -fsSLo /tmp/inter.zip \
+        https://github.com/rsms/inter/releases/download/v$INTER_VERSION/Inter-$INTER_VERSION.zip; \
+    echo "$INTER_SHA256  /tmp/inter.zip" | sha256sum -c; \
+    mkdir -p /out/usr/share/fonts/inter /out/usr/share/licenses/inter-fonts; \
+    unzip -j /tmp/inter.zip InterVariable.ttf InterVariable-Italic.ttf -d /out/usr/share/fonts/inter; \
+    unzip -j /tmp/inter.zip LICENSE.txt -d /out/usr/share/licenses/inter-fonts; \
+    rm /tmp/inter.zip
+
 COPY branding/ /src/
 RUN /src/render.sh /out
 
 FROM quay.io/almalinuxorg/atomic-desktop-kde
 
-# Rendered logos, wallpaper and Plymouth frames, then the hand-written
-# system files (KDE global theme, colour scheme, system-wide defaults).
+# Icons and the monospace font come from EPEL.
+RUN dnf -y install papirus-icon-theme jetbrains-mono-fonts && dnf clean all
+
+# Rendered logos, wallpapers, window decoration, fonts and Plymouth frames,
+# then the hand-written system files (KDE global theme, colour scheme,
+# system-wide defaults).
 COPY --from=assets /out/ /
 COPY files/ /
+RUN fc-cache -f
 
 # Point the upstream Fedora/AlmaLinux logo paths at the ZumaOS logos.
 RUN set -eux; \
@@ -34,6 +52,7 @@ RUN set -eux; \
         -exec ln -sf $logos/zumaos-logo.svg {} \; ; \
     ln -sf $logos/zumaos-logo.svg /usr/share/icons/hicolor/scalable/apps/start-here.svg; \
     ln -sf $logos/zumaos-logo.svg /usr/share/icons/hicolor/scalable/apps/zumaos-logo.svg; \
+    ln -sf $logos/zumaos-symbolic.svg /usr/share/icons/hicolor/scalable/apps/zumaos-symbolic.svg; \
     ln -sf $logos/zumaos-wordmark.png /usr/share/anaconda/pixmaps/sidebar-logo.png; \
     gtk-update-icon-cache -f -q /usr/share/icons/hicolor
 

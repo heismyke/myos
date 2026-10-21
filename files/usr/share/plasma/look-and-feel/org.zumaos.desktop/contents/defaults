@@ -5,7 +5,7 @@ widgetStyle=Breeze
 ColorScheme=ZumaOS
 
 [kdeglobals][Icons]
-Theme=breeze-dark
+Theme=Papirus-Dark
 
 [plasmarc][Theme]
 name=default
@@ -14,8 +14,8 @@ name=default
 cursorTheme=breeze_cursors
 
 [kwinrc][org.kde.kdecoration2]
-library=org.kde.breeze
-theme=Breeze
+library=org.kde.kwin.aurorae
+theme=__aurorae__svg__ZumaOS
 
 [KSplash]
 Theme=org.zumaos.desktop

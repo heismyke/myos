@@ -1,15 +1,17 @@
 [Plugins]
 blurEnabled=true
 contrastEnabled=true
+magiclampEnabled=true
+squashEnabled=false
 
 [Effect-blur]
-BlurStrength=12
-NoiseStrength=4
+BlurStrength=10
+NoiseStrength=2
 
 [org.kde.kdecoration2]
-library=org.kde.breeze
-theme=Breeze
-BorderSize=None
+library=org.kde.kwin.aurorae
+theme=__aurorae__svg__ZumaOS
+BorderSize=Normal
 BorderSizeAuto=false
-ButtonsOnLeft=
-ButtonsOnRight=IAX
+ButtonsOnLeft=XIA
+ButtonsOnRight=
