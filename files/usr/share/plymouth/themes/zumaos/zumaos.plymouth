@@ -1,0 +1,50 @@
+[Plymouth Theme]
+Name=ZumaOS
+Description=Minimal glass boot splash for ZumaOS
+ModuleName=two-step
+
+[two-step]
+ImageDir=/usr/share/plymouth/themes/zumaos
+WatermarkHorizontalAlignment=.5
+WatermarkVerticalAlignment=.45
+HorizontalAlignment=.5
+VerticalAlignment=.7
+DialogHorizontalAlignment=.5
+DialogVerticalAlignment=.7
+TitleHorizontalAlignment=.5
+TitleVerticalAlignment=.6
+Transition=none
+TransitionDuration=0.0
+BackgroundStartColor=0x0b1020
+BackgroundEndColor=0x151b33
+MessageBelowAnimation=true
+
+[boot-up]
+UseEndAnimation=false
+
+[shutdown]
+UseEndAnimation=false
+
+[reboot]
+UseEndAnimation=false
+
+[updates]
+SuppressMessages=true
+ProgressBarShowPercentComplete=true
+UseProgressBar=true
+Title=Installing updates...
+SubTitle=Do not turn off your computer
+
+[system-upgrade]
+SuppressMessages=true
+ProgressBarShowPercentComplete=true
+UseProgressBar=true
+Title=Upgrading ZumaOS...
+SubTitle=Do not turn off your computer
+
+[firmware-upgrade]
+SuppressMessages=true
+ProgressBarShowPercentComplete=true
+UseProgressBar=true
+Title=Upgrading firmware...
+SubTitle=Do not turn off your computer

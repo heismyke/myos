@@ -4,7 +4,7 @@ on:
   pull_request:
   push:
     branches:
-      - master
+      - main
     paths-ignore:
       - '**/README.md'
   workflow_dispatch:
@@ -20,7 +20,7 @@ jobs:
     with:
       containerfile: Containerfile
       image-name: ${{ github.event.repository.name }}
-      image-description: AlmaLinux Atomic image
+      image-description: ZumaOS, a minimal glass desktop built on AlmaLinux Atomic
       previous-image: ghcr.io/${{ github.repository }}:latest
       # Single platform keeps CI cheap; add arm64 once arm runners are available.
       platforms: amd64

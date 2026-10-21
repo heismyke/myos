@@ -1,0 +1,9 @@
+[KDE]
+LookAndFeelPackage=org.zumaos.desktop
+widgetStyle=Breeze
+
+[General]
+ColorScheme=ZumaOS
+
+[Icons]
+Theme=breeze-dark

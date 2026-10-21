@@ -1,0 +1,15 @@
+[Plugins]
+blurEnabled=true
+contrastEnabled=true
+
+[Effect-blur]
+BlurStrength=12
+NoiseStrength=4
+
+[org.kde.kdecoration2]
+library=org.kde.breeze
+theme=Breeze
+BorderSize=None
+BorderSizeAuto=false
+ButtonsOnLeft=
+ButtonsOnRight=IAX
