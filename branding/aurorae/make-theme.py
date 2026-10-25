@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate the ZumaOS Aurorae window decoration (macOS-style traffic lights).
+"""Generate the ZumaOS Aurorae window decoration (Windows 11-style caption buttons).
 
 Aurorae draws the frame with Plasma's 9-slice FrameSvg: each element below is a
 fixed-size tile (corners) or a stretched tile (edges, centre). QtSvg renders it,
@@ -13,11 +13,13 @@ import sys
 # Shadow padding around the window, corner radius, title bar height.
 PL = PR = 22
 PT, PB = 16, 28
-R = 10
-TITLE = 36
+R = 8
+TITLE = 32
 
-ACTIVE = dict(title="#2A2A2C", shadow=0.55)
-INACTIVE = dict(title="#232325", shadow=0.30)
+# Title bar colours are the colour scheme's Header background, so the title
+# bar and the app's toolbar read as one surface, like Windows 11's Mica.
+ACTIVE = dict(title="#242426", shadow=0.55)
+INACTIVE = dict(title="#1E1E20", shadow=0.30)
 
 # Drawing area for one frame: the window sits at (PL, PT) with this size.
 WC, HC = 4 * R, 4 * R
@@ -86,7 +88,7 @@ def window(color, rounded=True):
     return (
         f'<path fill="{color}" d="M{x0} {y0 + R} A{R} {R} 0 0 1 {x0 + R} {y0} H{x1 - R} '
         f'A{R} {R} 0 0 1 {x1} {y0 + R} V{y1} H{x0} Z"/>'
-        # Hairline highlight along the top edge, like macOS window chrome.
+        # Hairline highlight along the top edge, so dark windows separate.
         f'<path fill="none" stroke="#FFFFFF" stroke-opacity=".08" stroke-width="1" '
         f'd="M{x0 + 0.5} {y0 + R} A{R - 0.5} {R - 0.5} 0 0 1 {x0 + R} {y0 + 0.5} H{x1 - R} '
         f'A{R - 0.5} {R - 0.5} 0 0 1 {x1 - 0.5} {y0 + R}"/>'
@@ -128,41 +130,63 @@ def decoration():
     )
 
 
+# Caption buttons are full title-bar height and flush right, as in Windows 11.
+BW, BH = 46, TITLE
+GLYPH = "#E5E5EA"
+GLYPH_INACTIVE = "#8E8E93"
+
 BUTTONS = {
-    # name: (colour, pressed colour, symbol path drawn on hover)
-    "close": ("#FF5F57", "#BF4942", "M8 8 L14 14 M14 8 L8 14"),
-    "minimize": ("#FEBC2E", "#BF8E22", "M7.5 11 H14.5"),
-    "maximize": ("#28C840", "#1E9630", "M11 7.5 V14.5 M7.5 11 H14.5"),
-    "restore": ("#28C840", "#1E9630", "M8 11 H14"),
+    # name: (glyph path, hover fill, pressed fill, glyph colour on hover)
+    "minimize": ("M18 16.5 H28", "#FFFFFF14", "#FFFFFF0B", GLYPH),
+    "maximize": ("M19.5 11.5 H26.5 A1.5 1.5 0 0 1 28 13 V20 A1.5 1.5 0 0 1 26.5 21.5 H19.5 "
+                 "A1.5 1.5 0 0 1 18 20 V13 A1.5 1.5 0 0 1 19.5 11.5 Z", "#FFFFFF14", "#FFFFFF0B", GLYPH),
+    "restore": ("M19.5 13.5 H24.5 A1.5 1.5 0 0 1 26 15 V20 A1.5 1.5 0 0 1 24.5 21.5 H19.5 "
+                "A1.5 1.5 0 0 1 18 20 V15 A1.5 1.5 0 0 1 19.5 13.5 Z M20.5 11.5 H26.5 "
+                "A1.5 1.5 0 0 1 28 13 V19", "#FFFFFF14", "#FFFFFF0B", GLYPH),
+    "close": ("M18 11.5 L28 21.5 M28 11.5 L18 21.5", "#C42B1C", "#A8261A", "#FFFFFF"),
 }
 
 
-def button(color, pressed, symbol):
-    def state(sid, x, fill, show):
-        sym = (
-            f'<path d="{symbol}" transform="translate({x} 0)" fill="none" stroke="#000000" '
-            f'stroke-opacity=".55" stroke-width="1.4" stroke-linecap="round"/>' if show else ""
-        )
+def fill(color):
+    """#RRGGBBAA -> fill attributes QtSvg understands."""
+    if len(color) == 9:
+        return f'fill="{color[:7]}" fill-opacity="{int(color[7:], 16) / 255:.3f}"'
+    return f'fill="{color}"'
+
+
+def button(name, symbol, hover, pressed, hover_glyph):
+    # The close button sits in the window's rounded top-right corner.
+    corner = name == "close"
+
+    def background(x, color):
+        if corner:
+            return (f'<path {fill(color)} d="M{x} 0 H{x + BW - R} A{R} {R} 0 0 1 {x + BW} {R} '
+                    f'V{BH} H{x} Z"/>')
+        return f'<rect x="{x}" y="0" width="{BW}" height="{BH}" {fill(color)}/>'
+
+    def state(sid, x, bg, glyph):
         return (
-            f'<g id="{sid}-center"><rect x="{x}" y="0" width="22" height="22" fill="#000" fill-opacity="0"/>'
-            f'<circle cx="{x + 11}" cy="11" r="7" fill="{fill}"/>'
-            f'<circle cx="{x + 11}" cy="11" r="6.6" fill="none" stroke="#000000" stroke-opacity=".18" stroke-width=".8"/>'
-            f"{sym}</g>"
+            f'<g id="{sid}-center"><rect x="{x}" y="0" width="{BW}" height="{BH}" fill="#000" fill-opacity="0"/>'
+            + (background(x, bg) if bg else "")
+            + f'<path d="{symbol}" transform="translate({x} 0)" fill="none" stroke="{glyph}" '
+            f'stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/></g>'
         )
+    step = BW + 2
     parts = [
-        state("active", 0, color, False),
-        state("hover", 24, color, True),
-        state("pressed", 48, pressed, True),
-        state("inactive", 72, "#4A4A4D", False),
-        state("deactivated", 96, "#3A3A3C", False),
+        state("active", 0, None, GLYPH),
+        state("hover", step, hover, hover_glyph),
+        state("pressed", 2 * step, pressed, hover_glyph),
+        state("inactive", 3 * step, None, GLYPH_INACTIVE),
+        state("deactivated", 4 * step, None, "#5A5A5E"),
     ]
-    return f'<svg xmlns="http://www.w3.org/2000/svg" width="118" height="22">{"".join(parts)}</svg>'
+    return (f'<svg xmlns="http://www.w3.org/2000/svg" width="{5 * step - 2}" height="{BH}">'
+            f'{"".join(parts)}</svg>')
 
 
 RC = f"""[General]
 ActiveTextColor=229,229,234
 InactiveTextColor=142,142,147
-TitleAlignment=Center
+TitleAlignment=Left
 TitleVerticalAlignment=Center
 Animation=150
 UseTextShadow=false
@@ -173,15 +197,15 @@ HaloInactive=false
 BorderLeft=1
 BorderRight=1
 BorderBottom=1
-TitleEdgeTop=7
-TitleEdgeBottom=7
+TitleEdgeTop=0
+TitleEdgeBottom=0
 TitleEdgeLeft=10
-TitleEdgeRight=10
+TitleEdgeRight=0
 TitleBorderLeft=8
 TitleBorderRight=8
-TitleHeight={TITLE - 14}
-ButtonWidth=22
-ButtonHeight=22
+TitleHeight={TITLE}
+ButtonWidth={BW}
+ButtonHeight={BH}
 ButtonSpacing=0
 ButtonMarginTop=0
 ExplicitButtonSpacer=10
@@ -189,17 +213,17 @@ PaddingTop={PT}
 PaddingBottom={PB}
 PaddingLeft={PL}
 PaddingRight={PR}
-TitleEdgeTopMaximized=7
-TitleEdgeBottomMaximized=7
+TitleEdgeTopMaximized=0
+TitleEdgeBottomMaximized=0
 TitleEdgeLeftMaximized=10
-TitleEdgeRightMaximized=10
+TitleEdgeRightMaximized=0
 TitleBorderLeftMaximized=8
 TitleBorderRightMaximized=8
 """
 
 METADATA_DESKTOP = """[Desktop Entry]
 Name=ZumaOS
-Comment=macOS-style window decoration for ZumaOS
+Comment=Windows 11-style window decoration for ZumaOS
 X-KDE-PluginInfo-Name=ZumaOS
 X-KDE-PluginInfo-Author=ZumaOS
 X-KDE-PluginInfo-Version=1.0
@@ -209,7 +233,7 @@ X-KDE-PluginInfo-License=GPL-2.0-or-later
 METADATA_JSON = """{
     "KPlugin": {
         "Authors": [{ "Name": "ZumaOS" }],
-        "Description": "macOS-style window decoration for ZumaOS",
+        "Description": "Windows 11-style window decoration for ZumaOS",
         "Id": "ZumaOS",
         "License": "GPL-2.0-or-later",
         "Name": "ZumaOS",
@@ -223,8 +247,8 @@ def main():
     out = pathlib.Path(sys.argv[1])
     out.mkdir(parents=True, exist_ok=True)
     (out / "decoration.svg").write_text(decoration())
-    for name, (color, pressed, symbol) in BUTTONS.items():
-        (out / f"{name}.svg").write_text(button(color, pressed, symbol))
+    for name, (symbol, hover, pressed, glyph) in BUTTONS.items():
+        (out / f"{name}.svg").write_text(button(name, symbol, hover, pressed, glyph))
     (out / "ZumaOSrc").write_text(RC)
     (out / "metadata.desktop").write_text(METADATA_DESKTOP)
     (out / "metadata.json").write_text(METADATA_JSON)

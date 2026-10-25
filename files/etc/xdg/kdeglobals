@@ -16,3 +16,75 @@ activeFont=Inter Variable,10,-1,5,600,0,0,0,0,0,0,0,0,0,0,1
 
 [Icons]
 Theme=Papirus-Dark
+
+# Keep Settings to the everyday pages, as on macOS and Windows: network,
+# Bluetooth, sound, displays, wallpaper, notifications, power, users, input
+# devices, printers, language, date and time, accessibility, default apps,
+# updates and About. Pages that are technical or would undo the ZumaOS look
+# are hidden here. A user can bring one back by setting it to true in
+# ~/.config/kdeglobals.
+[KDE Control Module Restrictions]
+# Theming that would replace the ZumaOS look
+kcm_lookandfeel=false
+kcm_desktoptheme=false
+kcm_style=false
+kcm_icons=false
+kcm_cursortheme=false
+kcm_fonts=false
+kcm_fontinst=false
+kcm_kwindecoration=false
+kcm_breezedecoration=false
+kcm_oxygendecoration=false
+kcm_splashscreen=false
+kcm_plymouth=false
+kcm_sddm=false
+kcm_plasmalogin=false
+kcm_soundtheme=false
+# Window manager internals
+kcm_kwinoptions=false
+kcm_kwinrules=false
+kcm_kwin_scripts=false
+kcm_kwin_effects=false
+kcm_kwintabbox=false
+kcm_kwinscreenedges=false
+kcm_kwintouchscreen=false
+kcm_kwin_virtualdesktops=false
+kcm_kwinxwayland=false
+kcm_qtquicksettings=false
+kcm_animations=false
+kcm_workspace=false
+kcm_activities=false
+kcm_navigation=false
+# System plumbing
+kcm_kded=false
+kcm_smserver=false
+kcm_solid_actions=false
+kcm_device_automounter=false
+kcm_filetypes=false
+kcm_desktoppaths=false
+kcm_baloofile=false
+kcm_plasmasearch=false
+kcm_krunnersettings=false
+kcm_netpref=false
+kcm_proxy=false
+kcm_webshortcuts=false
+kcm_kwallet5=false
+kcm_cron=false
+kcm_kdf=false
+kcm_disks=false
+kcm_energyinfo=false
+kcm_colord=false
+kcm_kgamma=false
+kcm_feedback=false
+kcm_firewall=false
+kcm_krdpserver=false
+kcm_push_notifications=false
+kcm_waydroidintegration=false
+kcm_virtualkeyboard=false
+kcm_plasmakeyboard=false
+kcmspellchecking=false
+kcm_bookmarks=false
+kcm_trash=false
+kcm_cddb=false
+kcm_audiocd=false
+kcm_kamera=false

@@ -18,6 +18,32 @@ RUN set -eux; \
 COPY branding/ /src/
 RUN /src/render.sh /out
 
+# AppGrid, the Launchpad-style app library (GPL-2.0-or-later, not packaged
+# for EL10). Built on the base image so it links against the same Plasma.
+FROM quay.io/almalinuxorg/atomic-desktop-kde AS appgrid
+RUN dnf -y --enablerepo=crb install \
+        cmake extra-cmake-modules gcc-c++ gettext \
+        qt6-qtbase-devel qt6-qtdeclarative-devel libplasma-devel \
+        kf6-kpackage-devel kf6-kio-devel kf6-kservice-devel kf6-ki18n-devel \
+        kf6-kconfig-devel kf6-kcoreaddons-devel kf6-kiconthemes-devel \
+        kf6-ksvg-devel kf6-kwindowsystem-devel kf6-kglobalaccel-devel \
+        kf6-krunner-devel layer-shell-qt-devel plasma-activities-devel \
+        plasma-activities-stats-devel plasma-workspace-devel appstream-qt-devel \
+    && dnf clean all
+
+ARG APPGRID_VERSION=1.9.6
+ARG APPGRID_SHA256=cdbbc406a446665c36d2c0563d822c5bfa2894c23d094791cc7d18878b5dfd84
+RUN set -eux; \
+    curl -fsSLo /tmp/appgrid.tar.gz \
+        https://github.com/xarbit/plasma6-applet-appgrid/archive/refs/tags/v$APPGRID_VERSION.tar.gz; \
+    echo "$APPGRID_SHA256  /tmp/appgrid.tar.gz" | sha256sum -c; \
+    mkdir /tmp/appgrid; \
+    tar -xzf /tmp/appgrid.tar.gz -C /tmp/appgrid --strip-components=1; \
+    cmake -S /tmp/appgrid -B /tmp/build -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=/usr -DBUILD_TESTING=OFF; \
+    cmake --build /tmp/build -j"$(nproc)"; \
+    DESTDIR=/out cmake --install /tmp/build
+
 FROM quay.io/almalinuxorg/atomic-desktop-kde
 
 # Icons and the monospace font come from EPEL.
@@ -27,6 +53,7 @@ RUN dnf -y install papirus-icon-theme jetbrains-mono-fonts && dnf clean all
 # then the hand-written system files (KDE global theme, colour scheme,
 # system-wide defaults).
 COPY --from=assets /out/ /
+COPY --from=appgrid /out/ /
 COPY files/ /
 RUN fc-cache -f
 
@@ -55,6 +82,39 @@ RUN set -eux; \
     ln -sf $logos/zumaos-symbolic.svg /usr/share/icons/hicolor/scalable/apps/zumaos-symbolic.svg; \
     ln -sf $logos/zumaos-wordmark.png /usr/share/anaconda/pixmaps/sidebar-logo.png; \
     gtk-update-icon-cache -f -q /usr/share/icons/hicolor
+
+# System Settings becomes plain "Settings" with the ZumaOS icon, opened with
+# Meta+I as on Windows. Only the main entry is touched, not its actions;
+# translated names go so every language shows the same short name.
+RUN set -eux; \
+    f=/usr/share/applications/systemsettings.desktop; \
+    sed -i \
+        -e '/^\[Desktop Entry\]/,/^\[/{/^\(Name\|GenericName\)\[/d}' \
+        -e '/^\[Desktop Entry\]/,/^\[/{/^X-KDE-Shortcuts=/d}' \
+        -e '/^\[Desktop Entry\]/,/^\[/s/^Name=.*/Name=Settings/' \
+        -e '/^\[Desktop Entry\]/,/^\[/s/^Icon=.*/Icon=zumaos-settings/' \
+        -e '/^\[Desktop Entry\]/a X-KDE-Shortcuts=Meta+I' \
+        "$f"; \
+    grep -qx 'Name=Settings' "$f"; \
+    grep -qx 'X-KDE-Shortcuts=Meta+I' "$f"
+
+# Settings sidebar categories take their Windows 11 names.
+RUN set -eux; \
+    cd /usr/share/systemsettings/categories; \
+    for entry in \
+        'system-administration|System' \
+        'hardware|Devices' \
+        'network|Network \& internet' \
+        'appearance|Personalization' \
+        'applications|Apps' \
+        'regionalsettings|Time \& language' \
+        'security-privacy|Privacy \& security' \
+        'workspace|Desktop'; \
+    do \
+        f=settings-${entry%%|*}.desktop; name=${entry#*|}; \
+        sed -i -e '/^Name\[/d' -e "s/^Name=.*/Name=$name/" "$f"; \
+        grep -q '^Name=[A-Z]' "$f"; \
+    done
 
 # The login screen (Plasma Login Manager) and the distro fallback profile
 # use wallpapers/Fedora -> Default; point Default at ZumaOS.

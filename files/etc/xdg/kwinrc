@@ -1,8 +1,8 @@
 [Plugins]
 blurEnabled=true
 contrastEnabled=true
-magiclampEnabled=true
-squashEnabled=false
+magiclampEnabled=false
+squashEnabled=true
 
 [Effect-blur]
 BlurStrength=10
@@ -13,5 +13,9 @@ library=org.kde.kwin.aurorae
 theme=__aurorae__svg__ZumaOS
 BorderSize=Normal
 BorderSizeAuto=false
-ButtonsOnLeft=XIA
-ButtonsOnRight=
+ButtonsOnLeft=M
+ButtonsOnRight=IAX
+
+# Alt+Tab shows a grid of window thumbnails, as in Windows 11.
+[TabBox]
+LayoutName=thumbnail_grid

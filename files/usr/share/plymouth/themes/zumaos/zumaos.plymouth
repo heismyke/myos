@@ -1,6 +1,6 @@
 [Plymouth Theme]
 Name=ZumaOS
-Description=macOS-style boot splash for ZumaOS: wordmark and a slim progress bar
+Description=Boot splash for ZumaOS: wordmark and a slim progress bar
 ModuleName=two-step
 
 [two-step]

@@ -1,6 +1,6 @@
 import QtQuick
 
-// Login splash, macOS-style: the ZumaOS wordmark on black with a slim
+// Login splash: the ZumaOS wordmark on black with a slim
 // progress bar. ksplash advances `stage` from 1 to 6 as Plasma starts.
 Rectangle {
     id: root

@@ -24,6 +24,11 @@ rsvg-convert -w 64 -h 64 -o "$logos/zumaos-logo-small.png" logo-tile.svg
 cp glyph.svg "$logos/zumaos-symbolic.svg"
 rsvg-convert -w 64 -h 64 -o "$logos/zumaos-symbolic.png" glyph.svg
 
+# Settings app icon. A name Papirus doesn't have, so it comes from hicolor.
+icons=$out/usr/share/icons/hicolor/scalable/apps
+mkdir -p "$icons"
+cp icons/zumaos-settings.svg "$icons/"
+
 # Wordmark: white "Zuma" + violet "OS", for dark backgrounds.
 cp zumaos-wordmark.png "$logos/zumaos-wordmark.png"
 python3 - "$logos" "$plymouth" <<'EOF'
@@ -65,7 +70,7 @@ EOF
 package ZumaOS "ZumaOS" day.jpg night.jpg
 package ZumaOS-Moonrise "ZumaOS Moonrise" moonrise.jpg
 
-# Window decoration (traffic lights).
+# Window decoration (Windows 11-style caption buttons).
 python3 aurorae/make-theme.py "$out/usr/share/aurorae/themes/ZumaOS"
 
 # Boot splash parts. two-step plays throbber-* while booting and animation-*
