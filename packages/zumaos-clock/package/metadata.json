@@ -1,0 +1,14 @@
+{
+    "KPackageStructure": "Plasma/Applet",
+    "KPlugin": {
+        "Authors": [{ "Name": "ZumaOS" }],
+        "Category": "Date and Time",
+        "Description": "Date and time pills for the ZumaOS shelf, with a calendar",
+        "Icon": "preferences-system-time",
+        "Id": "org.zumaos.clock",
+        "License": "GPL-2.0-or-later",
+        "Name": "Shelf Clock",
+        "Version": "0.1"
+    },
+    "X-Plasma-API-Minimum-Version": "6.0"
+}

@@ -1,0 +1,11 @@
+module org.zumaos.style
+singleton Tokens 1.0 Tokens.qml
+ZIcon 1.0 ZIcon.qml
+ZSurface 1.0 ZSurface.qml
+ZStateLayer 1.0 ZStateLayer.qml
+ZTile 1.0 ZTile.qml
+ZIconButton 1.0 ZIconButton.qml
+ZPillButton 1.0 ZPillButton.qml
+ZSlider 1.0 ZSlider.qml
+ZPageIndicator 1.0 ZPageIndicator.qml
+ZPillSegment 1.0 ZPillSegment.qml

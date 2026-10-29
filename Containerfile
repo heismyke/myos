@@ -15,6 +15,44 @@ RUN set -eux; \
     unzip -j /tmp/inter.zip LICENSE.txt -d /out/usr/share/licenses/inter-fonts; \
     rm /tmp/inter.zip
 
+# Manrope (the Figma UI font) and Readex Pro (the shelf clock) aren't
+# packaged for EL10 either; take them from a pinned google/fonts commit.
+ARG GOOGLE_FONTS_COMMIT=8b0a1d0f5983c89bc2b93f1b5fb55f9e252744b5
+RUN set -eux; \
+    base=https://raw.githubusercontent.com/google/fonts/$GOOGLE_FONTS_COMMIT/ofl; \
+    fetch() { \
+        curl -fsSLo "$3" "$base/$1"; \
+        echo "$2  $3" | sha256sum -c; \
+    }; \
+    for f in manrope readexpro; do \
+        mkdir -p /out/usr/share/fonts/$f /out/usr/share/licenses/$f-fonts; \
+    done; \
+    fetch 'manrope/Manrope%5Bwght%5D.ttf' \
+        d0639be45d0af36e798172419d7bd173c4bd4f29e2b76cbb69db1d11bf8b0a40 \
+        /out/usr/share/fonts/manrope/Manrope.ttf; \
+    fetch manrope/OFL.txt \
+        e01b637272e0cbdfb240184dd98ea5cc671556d9894dae2668d92ab2c906787c \
+        /out/usr/share/licenses/manrope-fonts/OFL.txt; \
+    fetch 'readexpro/ReadexPro%5BHEXP,wght%5D.ttf' \
+        268bba7e1e8f3b14d798b3fb0e40ebaa3fc39308c9ac0020e2faf6df181cc30e \
+        /out/usr/share/fonts/readexpro/ReadexPro.ttf; \
+    fetch readexpro/OFL.txt \
+        b41267a3903a45955f77b44596e080480c577fb7221df59672d0bc8cd8cd4b6f \
+        /out/usr/share/licenses/readexpro-fonts/OFL.txt; \
+    chmod 644 /out/usr/share/fonts/*/*.ttf
+
+# ZumaOS widgets (packages/*/package) go where Plasma finds plasmoids, under
+# their plugin ids; the shared QML style module goes on Qt's import path.
+COPY packages/ /packages/
+RUN set -eux; \
+    for pkg in /packages/*/package; do \
+        id=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["KPlugin"]["Id"])' $pkg/metadata.json); \
+        mkdir -p /out/usr/share/plasma/plasmoids; \
+        cp -r $pkg /out/usr/share/plasma/plasmoids/$id; \
+    done; \
+    mkdir -p /out/usr/lib64/qt6/qml; \
+    for mod in /packages/*/qml; do cp -r $mod/. /out/usr/lib64/qt6/qml/; done
+
 COPY branding/ /src/
 RUN /src/render.sh /out
 

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kcfg xmlns="http://www.kde.org/standards/kcfg/1.0"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://www.kde.org/standards/kcfg/1.0 http://www.kde.org/standards/kcfg/1.0/kcfg.xsd">
+  <kcfgfile name=""/>
+  <group name="General">
+    <!-- Default set is the Figma master component (1:6291). temperature and
+         micAccess are the optional tiles from instance 1:16730. -->
+    <entry name="tiles" type="StringList">
+      <default>network,bluetooth,batterySaver,darkMode,accessibility,screenCapture,keyboard</default>
+    </entry>
+    <entry name="lightColorScheme" type="String">
+      <default>BreezeLight</default>
+    </entry>
+    <entry name="darkColorScheme" type="String">
+      <default>ZumaOS</default>
+    </entry>
+  </group>
+</kcfg>

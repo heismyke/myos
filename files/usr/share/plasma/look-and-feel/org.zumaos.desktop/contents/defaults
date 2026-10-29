@@ -8,7 +8,7 @@ ColorScheme=ZumaOS
 Theme=Papirus-Dark
 
 [plasmarc][Theme]
-name=default
+name=ZumaOS
 
 [kcminputrc][Mouse]
 cursorTheme=breeze_cursors

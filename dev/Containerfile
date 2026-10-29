@@ -1,0 +1,41 @@
+# ZumaOS development environment: Debian 13 (trixie) with Plasma 6 and the
+# tools to run and screenshot plasmoids headlessly. Not the OS image itself.
+FROM docker.io/library/debian:trixie
+
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        plasma-workspace plasma-desktop plasma-sdk \
+        plasma-nm plasma-pa powerdevil bluedevil \
+        qml6-module-org-kde-bluezqt qml6-module-org-kde-kirigami \
+        qml6-module-qtquick-layouts qml6-module-qtquick-controls \
+        qml6-module-qt5compat-graphicaleffects qml6-module-qtquick-effects \
+        qt6-declarative-dev-tools \
+        dbus-x11 xvfb xauth x11-apps imagemagick fonts-inter \
+        breeze-icon-theme papirus-icon-theme \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV LANG=C.UTF-8
+
+# Manrope is the Figma design's UI font; qml-qt6 and libxcb-cursor0 run the
+# component previews and tests under Xvfb.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        fonts-manrope qml-qt6 libxcb-cursor0 qml6-module-qttest \
+    && rm -rf /var/lib/apt/lists/*
+
+# A full Plasma X11 session for whole-desktop screenshots (dev/run-session.sh),
+# and the tools branding/render.sh uses.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        kwin-x11 librsvg2-bin python3-pil \
+    && rm -rf /var/lib/apt/lists/*
+
+# Readex Pro (shelf clock font in the Figma design) isn't packaged in Debian.
+ARG READEX_COMMIT=8b0a1d0f5983c89bc2b93f1b5fb55f9e252744b5
+ARG READEX_SHA256=268bba7e1e8f3b14d798b3fb0e40ebaa3fc39308c9ac0020e2faf6df181cc30e
+ADD --checksum=sha256:${READEX_SHA256} \
+    https://raw.githubusercontent.com/google/fonts/${READEX_COMMIT}/ofl/readexpro/ReadexPro%5BHEXP,wght%5D.ttf \
+    /usr/local/share/fonts/readexpro/ReadexPro.ttf
+RUN chmod 644 /usr/local/share/fonts/readexpro/ReadexPro.ttf && fc-cache -f
+
+RUN useradd -m dev
+USER dev
+WORKDIR /src

@@ -2,17 +2,18 @@
 LookAndFeelPackage=org.zumaos.desktop
 widgetStyle=Breeze
 
+# Figma: Manrope 14px (10.5pt) for UI text, Manrope Bold 20px (15pt) for
+# window titles. No accent colour; the scheme's white selection is used.
 [General]
 ColorScheme=ZumaOS
-AccentColor=168,85,247
-font=Inter Variable,10,-1,5,400,0,0,0,0,0,0,0,0,0,0,1
-menuFont=Inter Variable,10,-1,5,400,0,0,0,0,0,0,0,0,0,0,1
-toolBarFont=Inter Variable,10,-1,5,400,0,0,0,0,0,0,0,0,0,0,1
-smallestReadableFont=Inter Variable,8,-1,5,400,0,0,0,0,0,0,0,0,0,0,1
+font=Manrope,10.5,-1,5,400,0,0,0,0,0,0,0,0,0,0,1
+menuFont=Manrope,10.5,-1,5,400,0,0,0,0,0,0,0,0,0,0,1
+toolBarFont=Manrope,10.5,-1,5,400,0,0,0,0,0,0,0,0,0,0,1
+smallestReadableFont=Manrope,8,-1,5,400,0,0,0,0,0,0,0,0,0,0,1
 fixed=JetBrains Mono,10,-1,5,400,0,0,0,0,0,0,0,0,0,0,1
 
 [WM]
-activeFont=Inter Variable,10,-1,5,600,0,0,0,0,0,0,0,0,0,0,1
+activeFont=Manrope,15,-1,5,700,0,0,0,0,0,0,0,0,0,0,1
 
 [Icons]
 Theme=Papirus-Dark

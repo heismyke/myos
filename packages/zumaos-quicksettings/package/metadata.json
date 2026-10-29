@@ -1,0 +1,14 @@
+{
+    "KPackageStructure": "Plasma/Applet",
+    "KPlugin": {
+        "Authors": [{ "Name": "ZumaOS" }],
+        "Category": "System Information",
+        "Description": "Network, Bluetooth, sound, brightness, power and session controls in one panel",
+        "Icon": "preferences-system",
+        "Id": "org.zumaos.quicksettings",
+        "License": "GPL-2.0-or-later",
+        "Name": "Quick Settings",
+        "Version": "0.1"
+    },
+    "X-Plasma-API-Minimum-Version": "6.0"
+}

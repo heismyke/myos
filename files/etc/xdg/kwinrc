@@ -13,9 +13,11 @@ library=org.kde.kwin.aurorae
 theme=__aurorae__svg__ZumaOS
 BorderSize=Normal
 BorderSizeAuto=false
-ButtonsOnLeft=M
-ButtonsOnRight=IAX
+# Figma: close, maximise, minimise on the left; nothing on the right (apps
+# keep their own hamburger menu in the toolbar).
+ButtonsOnLeft=XAI
+ButtonsOnRight=
 
-# Alt+Tab shows a grid of window thumbnails, as in Windows 11.
+# Alt+Tab shows a grid of window thumbnails.
 [TabBox]
 LayoutName=thumbnail_grid

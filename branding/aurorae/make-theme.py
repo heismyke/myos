@@ -1,25 +1,36 @@
 #!/usr/bin/env python3
-"""Generate the ZumaOS Aurorae window decoration (Windows 11-style caption buttons).
+"""Generate the ZumaOS Aurorae window decoration from the Figma design.
+
+The design (Settings window, Figma node 1:19043, drawn at 3840px; values here
+are scaled by 0.375 to the 1440px desktop frames) has a white 37px title bar
+with 8px top corners and a 3px #2D2D2D outline, close / maximise / minimise
+glyphs flush left, a centred bold title, and no buttons on the right.
 
 Aurorae draws the frame with Plasma's 9-slice FrameSvg: each element below is a
 fixed-size tile (corners) or a stretched tile (edges, centre). QtSvg renders it,
-so shadows are gradients rather than blur filters, which QtSvg ignores.
+so shadows are gradients rather than blur filters, which QtSvg ignores. KSvg
+sizes a tile from its element's geometric bounds and ignores clip paths, so
+every tile holds only the shapes inside it, cut to its rectangle here.
 
 Usage: make-theme.py OUTDIR
 """
 import pathlib
+import re
 import sys
 
-# Shadow padding around the window, corner radius, title bar height.
+# Shadow padding around the window, corner radius, title bar height, outline.
 PL = PR = 22
 PT, PB = 16, 28
 R = 8
-TITLE = 32
+TITLE = 37
+STROKE = 3
+OUTLINE = "#2D2D2D"
 
-# Title bar colours are the colour scheme's Header background, so the title
-# bar and the app's toolbar read as one surface, like Windows 11's Mica.
-ACTIVE = dict(title="#242426", shadow=0.55)
-INACTIVE = dict(title="#1E1E20", shadow=0.30)
+# Figma has only the active window. Inactive keeps the white bar and greys
+# the title and glyphs (see RC and GLYPH_INACTIVE). Figma draws no shadow;
+# one is kept so windows separate from each other.
+ACTIVE = dict(title="#FFFFFF", shadow=0.55)
+INACTIVE = dict(title="#FFFFFF", shadow=0.30)
 
 # Drawing area for one frame: the window sits at (PL, PT) with this size.
 WC, HC = 4 * R, 4 * R
@@ -47,8 +58,18 @@ def stops(alpha):
     )
 
 
+def rect(x, y, w, h, attrs):
+    return ("rect", x, y, w, h, attrs)
+
+
+def quarter(cx, cy, r, sx, sy, attrs, stroke=False):
+    """Quarter disc (or, with stroke, arc) of radius r around (cx, cy),
+    towards (sx, sy); its bounding square is (cx + min(0, sx * r), ...)."""
+    return ("quarter", cx, cy, r, sx, sy, attrs, stroke)
+
+
 def shadow(prefix, alpha):
-    """Shadow shapes around a window at (PL, PT, WC, HC)."""
+    """Shadow gradients and shapes around a window at (PL, PT, WC, HC)."""
     x0, y0, x1, y1 = PL, PT, PL + WC, PT + HC
     s = stops(alpha)
     g = [
@@ -59,11 +80,10 @@ def shadow(prefix, alpha):
         f'<linearGradient id="{prefix}sr" x1="{x1}" y1="0" x2="{W}" y2="0" gradientUnits="userSpaceOnUse">{s}</linearGradient>',
     ]
     shapes = [
-        f'<rect x="{x0}" y="0" width="{WC}" height="{y0}" fill="url(#{prefix}st)"/>',
-        f'<rect x="{x0}" y="{y1}" width="{WC}" height="{PB}" fill="url(#{prefix}sb)"/>',
-        f'<rect x="0" y="{y0}" width="{PL}" height="{HC}" fill="url(#{prefix}sl)"/>',
-        f'<rect x="{x1}" y="{y0}" width="{PR}" height="{HC}" fill="url(#{prefix}sr)"/>',
-        f'<rect x="{x0}" y="{y0}" width="{WC}" height="{HC}" fill-opacity="{alpha}"/>',
+        rect(x0, 0, WC, y0, f'fill="url(#{prefix}st)"'),
+        rect(x0, y1, WC, PB, f'fill="url(#{prefix}sb)"'),
+        rect(0, y0, PL, HC, f'fill="url(#{prefix}sl)"'),
+        rect(x1, y0, PR, HC, f'fill="url(#{prefix}sr)"'),
     ]
     # Corners: elliptical radial gradients centred on each window corner.
     for name, cx, cy, rx, ry, top in (
@@ -77,38 +97,83 @@ def shadow(prefix, alpha):
         )
         qx = cx - rx if cx == x0 else cx
         qy = cy - ry if cy == y0 else cy
-        shapes.append(f'<rect x="{qx}" y="{qy}" width="{rx}" height="{ry}" fill="url(#{prefix}c{name})"/>')
+        shapes.append(rect(qx, qy, rx, ry, f'fill="url(#{prefix}c{name})"'))
+    # Behind the rounded corners, the top shadow's strength; under the window
+    # itself, the full shadow in the window's shape.
+    top = f'fill="#000" fill-opacity="{alpha * 0.6:.3f}"'
+    shapes += [rect(x0, y0, R, R, top), rect(x1 - R, y0, R, R, top)]
+    shapes += window_fill(f'fill="#000" fill-opacity="{alpha}"', rounded=True)
     return g, shapes
 
 
-def window(color, rounded=True):
-    x0, y0, x1, y1 = PL, PT, PL + WC, PT + HC
+def window_fill(attrs, rounded):
+    """The window's area: rounded top corners as quarter discs, the rest as
+    rects that stop at the tile boundaries."""
+    x0, y0, x1 = PL, PT, PL + WC
     if not rounded:
-        return f'<rect x="{x0}" y="{y0}" width="{WC}" height="{HC}" fill="{color}"/>'
-    return (
-        f'<path fill="{color}" d="M{x0} {y0 + R} A{R} {R} 0 0 1 {x0 + R} {y0} H{x1 - R} '
-        f'A{R} {R} 0 0 1 {x1} {y0 + R} V{y1} H{x0} Z"/>'
-        # Hairline highlight along the top edge, so dark windows separate.
-        f'<path fill="none" stroke="#FFFFFF" stroke-opacity=".08" stroke-width="1" '
-        f'd="M{x0 + 0.5} {y0 + R} A{R - 0.5} {R - 0.5} 0 0 1 {x0 + R} {y0 + 0.5} H{x1 - R} '
-        f'A{R - 0.5} {R - 0.5} 0 0 1 {x1 - 0.5} {y0 + R}"/>'
-    )
+        return [rect(x0, y0, WC, HC, attrs)]
+    return [
+        quarter(x0 + R, y0 + R, R, -1, -1, attrs),
+        quarter(x1 - R, y0 + R, R, 1, -1, attrs),
+        rect(x0 + R, y0, WC - 2 * R, R, attrs),
+        rect(x0, y0 + R, WC, HC - R, attrs),
+    ]
+
+
+def window(color, rounded=True):
+    """The frame: white fill with the outline inside its edge. Borders are as
+    wide as the outline, so below the title bar only the outline shows."""
+    x0, y0, x1, y1 = PL, PT, PL + WC, PT + HC
+    line = f'fill="{OUTLINE}"'
+    shapes = window_fill(f'fill="{color}"', rounded)
+    r = R if rounded else 0
+    if rounded:
+        arc = f'fill="none" stroke="{OUTLINE}" stroke-width="{STROKE}"'
+        shapes += [quarter(x0 + R, y0 + R, R, -1, -1, arc, stroke=True),
+                   quarter(x1 - R, y0 + R, R, 1, -1, arc, stroke=True)]
+    shapes += [
+        rect(x0 + r, y0, WC - 2 * r, STROKE, line),
+        rect(x0, y0 + r, STROKE, HC - r, line),
+        rect(x1 - STROKE, y0 + r, STROKE, HC - r, line),
+        rect(x0, y1 - STROKE, WC, STROKE, line),
+    ]
+    return shapes
+
+
+def cut(shape, tx, ty, tw, th):
+    """SVG for the part of `shape` inside the tile, or "" if none."""
+    if shape[0] == "rect":
+        _, x, y, w, h, attrs = shape
+        ax, ay = max(x, tx), max(y, ty)
+        bx, by = min(x + w, tx + tw), min(y + h, ty + th)
+        if bx <= ax or by <= ay:
+            return ""
+        return f'<rect x="{ax}" y="{ay}" width="{bx - ax}" height="{by - ay}" {attrs}/>'
+    _, cx, cy, r, sx, sy, attrs, stroke = shape
+    qx, qy = cx + min(0, sx * r), cy + min(0, sy * r)
+    if qx >= tx + tw or qx + r <= tx or qy >= ty + th or qy + r <= ty:
+        return ""
+    # Tile boundaries sit on corner radii, so a quarter is never split.
+    assert tx <= qx and qx + r <= tx + tw and ty <= qy and qy + r <= ty + th
+    sweep = 1 if sx * sy > 0 else 0
+    if stroke:
+        ri = r - STROKE / 2
+        return (f'<path d="M{cx + sx * ri},{cy} A{ri},{ri} 0 0 {sweep} {cx},{cy + sy * ri}" {attrs}/>')
+    return (f'<path d="M{cx},{cy} H{cx + sx * r} A{r},{r} 0 0 {sweep} {cx},{cy + sy * r} Z" {attrs}/>')
 
 
 def frame(prefix, style, offset_y, maximized=False):
     """One complete 9-slice frame, shifted down by offset_y so frames don't overlap."""
     pid = prefix.replace("-", "")
-    defs, body = ([], []) if maximized else shadow(pid, style["shadow"])
-    body.append(window(style["title"], rounded=not maximized))
-    art = "".join(body)
+    defs, shapes = ([], []) if maximized else shadow(pid, style["shadow"])
+    shapes += window(style["title"], rounded=not maximized)
     out = []
     for pos, (x, y, w, h) in TILES.items():
-        cid = f"{pid}{pos}clip"
-        defs.append(f'<clipPath id="{cid}"><rect x="{x}" y="{y}" width="{w}" height="{h}"/></clipPath>')
+        art = "".join(cut(sh, x, y, w, h) for sh in shapes)
+        # The transparent rect pins the tile's bounds to its full cell.
         out.append(
             f'<g id="{prefix}-{pos}" transform="translate(0 {offset_y})">'
-            f'<rect x="{x}" y="{y}" width="{w}" height="{h}" fill="#000" fill-opacity="0"/>'
-            f'<g clip-path="url(#{cid})">{art}</g></g>'
+            f'<rect x="{x}" y="{y}" width="{w}" height="{h}" fill="#000" fill-opacity="0"/>{art}</g>'
         )
     return defs, out
 
@@ -130,63 +195,52 @@ def decoration():
     )
 
 
-# Caption buttons are full title-bar height and flush right, as in Windows 11.
-BW, BH = 46, TITLE
-GLYPH = "#E5E5EA"
-GLYPH_INACTIVE = "#8E8E93"
+# Caption buttons are square, full title-bar height, flush left. Glyphs are
+# the design's Material Symbols paths (glyphs/*.svg, 98.4615 units square).
+BW = BH = TITLE
+GLYPH = OUTLINE
+GLYPH_INACTIVE = "#7B7B7B"
+GLYPHS = pathlib.Path(__file__).with_name("glyphs")
+# Figma has no hover/pressed states: a #2D2D2D wash at the Material
+# state-layer opacities, as in the QML design system.
+HOVER, PRESSED = 0.08, 0.12
 
-BUTTONS = {
-    # name: (glyph path, hover fill, pressed fill, glyph colour on hover)
-    "minimize": ("M18 16.5 H28", "#FFFFFF14", "#FFFFFF0B", GLYPH),
-    "maximize": ("M19.5 11.5 H26.5 A1.5 1.5 0 0 1 28 13 V20 A1.5 1.5 0 0 1 26.5 21.5 H19.5 "
-                 "A1.5 1.5 0 0 1 18 20 V13 A1.5 1.5 0 0 1 19.5 11.5 Z", "#FFFFFF14", "#FFFFFF0B", GLYPH),
-    "restore": ("M19.5 13.5 H24.5 A1.5 1.5 0 0 1 26 15 V20 A1.5 1.5 0 0 1 24.5 21.5 H19.5 "
-                "A1.5 1.5 0 0 1 18 20 V15 A1.5 1.5 0 0 1 19.5 13.5 Z M20.5 11.5 H26.5 "
-                "A1.5 1.5 0 0 1 28 13 V19", "#FFFFFF14", "#FFFFFF0B", GLYPH),
-    "close": ("M18 11.5 L28 21.5 M28 11.5 L18 21.5", "#C42B1C", "#A8261A", "#FFFFFF"),
-}
+# Restore has no glyph in the design; it reuses maximise.
+BUTTONS = {"minimize": "minimize", "maximize": "maximize", "restore": "maximize", "close": "close"}
 
 
-def fill(color):
-    """#RRGGBBAA -> fill attributes QtSvg understands."""
-    if len(color) == 9:
-        return f'fill="{color[:7]}" fill-opacity="{int(color[7:], 16) / 255:.3f}"'
-    return f'fill="{color}"'
+def glyph(name):
+    return re.search(r' d="([^"]+)"', (GLYPHS / f"{name}.svg").read_text())[1]
 
 
-def button(name, symbol, hover, pressed, hover_glyph):
-    # The close button sits in the window's rounded top-right corner.
-    corner = name == "close"
+def button(name, glyph_name):
+    d = glyph(glyph_name)
+    scale = BW / 98.4615
 
-    def background(x, color):
-        if corner:
-            return (f'<path {fill(color)} d="M{x} 0 H{x + BW - R} A{R} {R} 0 0 1 {x + BW} {R} '
-                    f'V{BH} H{x} Z"/>')
-        return f'<rect x="{x}" y="0" width="{BW}" height="{BH}" {fill(color)}/>'
-
-    def state(sid, x, bg, glyph):
+    def state(sid, x, wash, color):
+        bg = (f'<circle cx="{x + BW / 2}" cy="{BH / 2}" r="{BW / 2 - 4}" fill="{OUTLINE}" '
+              f'fill-opacity="{wash}"/>' if wash else "")
         return (
             f'<g id="{sid}-center"><rect x="{x}" y="0" width="{BW}" height="{BH}" fill="#000" fill-opacity="0"/>'
-            + (background(x, bg) if bg else "")
-            + f'<path d="{symbol}" transform="translate({x} 0)" fill="none" stroke="{glyph}" '
-            f'stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/></g>'
+            f'{bg}<path d="{d}" fill="{color}" fill-rule="evenodd" '
+            f'transform="translate({x} 0) scale({scale:.5f})"/></g>'
         )
     step = BW + 2
     parts = [
-        state("active", 0, None, GLYPH),
-        state("hover", step, hover, hover_glyph),
-        state("pressed", 2 * step, pressed, hover_glyph),
-        state("inactive", 3 * step, None, GLYPH_INACTIVE),
-        state("deactivated", 4 * step, None, "#5A5A5E"),
+        state("active", 0, 0, GLYPH),
+        state("hover", step, HOVER, GLYPH),
+        state("pressed", 2 * step, PRESSED, GLYPH),
+        state("inactive", 3 * step, 0, GLYPH_INACTIVE),
+        state("deactivated", 4 * step, 0, "#C4C4C4"),
     ]
     return (f'<svg xmlns="http://www.w3.org/2000/svg" width="{5 * step - 2}" height="{BH}">'
             f'{"".join(parts)}</svg>')
 
 
 RC = f"""[General]
-ActiveTextColor=229,229,234
-InactiveTextColor=142,142,147
-TitleAlignment=Left
+ActiveTextColor=45,45,45
+InactiveTextColor=123,123,123
+TitleAlignment=Center
 TitleVerticalAlignment=Center
 Animation=150
 UseTextShadow=false
@@ -194,12 +248,12 @@ HaloActive=false
 HaloInactive=false
 
 [Layout]
-BorderLeft=1
-BorderRight=1
-BorderBottom=1
+BorderLeft={STROKE}
+BorderRight={STROKE}
+BorderBottom={STROKE}
 TitleEdgeTop=0
 TitleEdgeBottom=0
-TitleEdgeLeft=10
+TitleEdgeLeft=0
 TitleEdgeRight=0
 TitleBorderLeft=8
 TitleBorderRight=8
@@ -208,14 +262,14 @@ ButtonWidth={BW}
 ButtonHeight={BH}
 ButtonSpacing=0
 ButtonMarginTop=0
-ExplicitButtonSpacer=10
+ExplicitButtonSpacer=0
 PaddingTop={PT}
 PaddingBottom={PB}
 PaddingLeft={PL}
 PaddingRight={PR}
 TitleEdgeTopMaximized=0
 TitleEdgeBottomMaximized=0
-TitleEdgeLeftMaximized=10
+TitleEdgeLeftMaximized=0
 TitleEdgeRightMaximized=0
 TitleBorderLeftMaximized=8
 TitleBorderRightMaximized=8
@@ -223,7 +277,7 @@ TitleBorderRightMaximized=8
 
 METADATA_DESKTOP = """[Desktop Entry]
 Name=ZumaOS
-Comment=Windows 11-style window decoration for ZumaOS
+Comment=ZumaOS window decoration
 X-KDE-PluginInfo-Name=ZumaOS
 X-KDE-PluginInfo-Author=ZumaOS
 X-KDE-PluginInfo-Version=1.0
@@ -233,7 +287,7 @@ X-KDE-PluginInfo-License=GPL-2.0-or-later
 METADATA_JSON = """{
     "KPlugin": {
         "Authors": [{ "Name": "ZumaOS" }],
-        "Description": "Windows 11-style window decoration for ZumaOS",
+        "Description": "ZumaOS window decoration",
         "Id": "ZumaOS",
         "License": "GPL-2.0-or-later",
         "Name": "ZumaOS",
@@ -247,8 +301,8 @@ def main():
     out = pathlib.Path(sys.argv[1])
     out.mkdir(parents=True, exist_ok=True)
     (out / "decoration.svg").write_text(decoration())
-    for name, (symbol, hover, pressed, glyph) in BUTTONS.items():
-        (out / f"{name}.svg").write_text(button(name, symbol, hover, pressed, glyph))
+    for name, glyph_name in BUTTONS.items():
+        (out / f"{name}.svg").write_text(button(name, glyph_name))
     (out / "ZumaOSrc").write_text(RC)
     (out / "metadata.desktop").write_text(METADATA_DESKTOP)
     (out / "metadata.json").write_text(METADATA_JSON)

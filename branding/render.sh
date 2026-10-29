@@ -27,7 +27,7 @@ rsvg-convert -w 64 -h 64 -o "$logos/zumaos-symbolic.png" glyph.svg
 # Settings app icon. A name Papirus doesn't have, so it comes from hicolor.
 icons=$out/usr/share/icons/hicolor/scalable/apps
 mkdir -p "$icons"
-cp icons/zumaos-settings.svg "$icons/"
+cp icons/zumaos-settings.svg icons/zumaos-launcher.svg "$icons/"
 
 # Wordmark: white "Zuma" + violet "OS", for dark backgrounds.
 cp zumaos-wordmark.png "$logos/zumaos-wordmark.png"
@@ -40,16 +40,20 @@ for height, path in ((48, f"{logos}/zumaos-wordmark-small.png"), (64, f"{plymout
     mark.resize((round(mark.width * height / mark.height), height), Image.LANCZOS).save(path)
 EOF
 
-# Wallpapers: "ZumaOS" switches between the day and night photo with the
-# colour scheme; "ZumaOS Moonrise" is the second night photo.
+# Wallpapers: "ZumaOS" is the Figma design's purple waves (1440x1024, the
+# only size the design has). "ZumaOS Rock" switches between the day and night
+# Zuma Rock photos with the colour scheme; "ZumaOS Moonrise" is the second
+# night photo.
 package() {
     local id=$1 name=$2 light=$3 dark=${4:-}
     local dir=$wallpapers/$id/contents
+    local size
     mkdir -p "$dir/images"
-    cp "wallpapers/$light" "$dir/images/2752x1536.jpg"
+    size=$(python3 -c 'import sys; from PIL import Image; print("%dx%d" % Image.open(sys.argv[1]).size)' "wallpapers/$light")
+    cp "wallpapers/$light" "$dir/images/$size.${light##*.}"
     if [ -n "$dark" ]; then
         mkdir -p "$dir/images_dark"
-        cp "wallpapers/$dark" "$dir/images_dark/2752x1536.jpg"
+        cp "wallpapers/$dark" "$dir/images_dark/$size.${dark##*.}"
     fi
     python3 - "wallpapers/${dark:-$light}" "$dir/screenshot.jpg" <<'EOF'
 import sys
@@ -67,11 +71,15 @@ EOF
 }
 EOF
 }
-package ZumaOS "ZumaOS" day.jpg night.jpg
+package ZumaOS "ZumaOS" waves.png
+package ZumaOS-Rock "ZumaOS Rock" day.jpg night.jpg
 package ZumaOS-Moonrise "ZumaOS Moonrise" moonrise.jpg
 
-# Window decoration (Windows 11-style caption buttons).
+# Window decoration, from the Figma window frame.
 python3 aurorae/make-theme.py "$out/usr/share/aurorae/themes/ZumaOS"
+
+# Plasma theme: the Figma shelf, its pill task buttons and popups.
+python3 desktoptheme/make-theme.py "$out/usr/share/plasma/desktoptheme/ZumaOS"
 
 # Boot splash parts. two-step plays throbber-* while booting and animation-*
 # at the end.
